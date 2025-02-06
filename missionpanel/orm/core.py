@@ -41,3 +41,10 @@ class Matcher(Base):
     name = Column(Text, primary_key=True, comment="Matcher Content")
     mission_id = Column(Integer, ForeignKey("mission.id"), index=True, comment="Mission ID")
     match_mission = relationship("Mission", backref="match_mission")
+
+
+if __name__ == "__main__":
+    from sqlalchemy import create_engine
+
+    engine = create_engine("sqlite://", echo=True)
+    Base.metadata.create_all(engine)
