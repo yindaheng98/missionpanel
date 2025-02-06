@@ -22,6 +22,10 @@ class Mission(Base):
     create_time = Column(DateTime, default=datetime.datetime.now, comment="Mission Create Time")
     last_update_time = Column(DateTime, onupdate=datetime.datetime.now, comment="Mission Update Time")
 
+    # back populate relationships
+    matchers: Mapped[List['Matcher']] = relationship(back_populates="mission")
+    tags: Mapped[List['MissionTag']] = relationship(back_populates="mission")
+
 
 class Matcher(Base):
     __tablename__ = "matcher"
@@ -29,7 +33,7 @@ class Matcher(Base):
 
     # relationship
     mission_id = Column(Integer, ForeignKey("mission.id"), index=True, comment="Mission ID")
-    mission: Mapped['Mission'] = relationship(backref="matchers")
+    mission: Mapped['Mission'] = relationship(Mission, back_populates="matchers")
 
 
 class Tag(Base):
@@ -37,17 +41,20 @@ class Tag(Base):
     id = Column(Integer, primary_key=True, autoincrement=True, comment="Tag ID")
     name = Column(Text, index=True, unique=True, comment="Tag Name")
 
+    # back populate relationships
+    missions: Mapped[List['MissionTag']] = relationship(back_populates="tag")
+
 
 class MissionTag(Base):
     __tablename__ = "missiontag"
 
     # relationship
     tag_id = Column(Integer, ForeignKey("tag.id"), primary_key=True, comment="Tag ID")
-    tag: Mapped['Tag'] = relationship(backref="missions")
+    tag: Mapped['Tag'] = relationship(Tag, back_populates="missions")
 
     # relationship
     mission_id = Column(Integer, ForeignKey("mission.id"), primary_key=True, comment="Mission ID")
-    mission: Mapped['Mission'] = relationship(backref="tags")
+    mission: Mapped['Mission'] = relationship(Mission, back_populates="tags")
 
 
 if __name__ == "__main__":
@@ -73,6 +80,10 @@ if __name__ == "__main__":
                 Matcher(name="Ex hard mission"),
                 Matcher(name="Ex Hard Mission"),
             ],
+            tags=[
+                MissionTag(tag=extag),
+                MissionTag(tag=hdtag)
+            ]
         )
         hdmission = Mission(
             content="Hard mission",
@@ -81,6 +92,9 @@ if __name__ == "__main__":
                 Matcher(name="Hard mission"),
                 Matcher(name="Hard Mission"),
             ],
+            tags=[
+                MissionTag(tag=hdtag)
+            ]
         )
         esmission = Mission(content="Easy")
         session.add_all([exmission, hdmission, esmission])
