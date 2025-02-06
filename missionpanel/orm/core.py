@@ -23,6 +23,15 @@ class Mission(Base):
     last_update_time = Column(DateTime, onupdate=datetime.datetime.now, comment="Mission Update Time")
 
 
+class Matcher(Base):
+    __tablename__ = "matcher"
+    name = Column(Text, primary_key=True, comment="Matcher Content")
+
+    # relationship
+    mission_id = Column(Integer, ForeignKey("mission.id"), index=True, comment="Mission ID")
+    mission: Mapped['Mission'] = relationship(backref="matchers")
+
+
 class Tag(Base):
     __tablename__ = "tag"
     id = Column(Integer, primary_key=True, autoincrement=True, comment="Tag ID")
@@ -41,15 +50,6 @@ class MissionTag(Base):
     mission: Mapped['Mission'] = relationship(backref="tags")
 
 
-class Matcher(Base):
-    __tablename__ = "matcher"
-    name = Column(Text, primary_key=True, comment="Matcher Content")
-
-    # relationship
-    mission_id = Column(Integer, ForeignKey("mission.id"), index=True, comment="Mission ID")
-    mission: Mapped['Mission'] = relationship(backref="matchers")
-
-
 if __name__ == "__main__":
     from sqlalchemy import create_engine
     from sqlalchemy.orm import Session
@@ -58,6 +58,13 @@ if __name__ == "__main__":
     Base.metadata.create_all(engine)
 
     with Session(engine) as session:
+        extag = Tag(
+            name="ex hard"
+        )
+        hdtag = Tag(
+            name="hard"
+        )
+        session.add_all([extag, hdtag])
         exmission = Mission(
             content="Ex hard mission",
             matchers=[
