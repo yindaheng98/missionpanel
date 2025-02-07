@@ -38,8 +38,7 @@ class Matcher(Base):
 
 class Tag(Base):
     __tablename__ = "tag"
-    id = Column(Integer, primary_key=True, autoincrement=True, comment="Tag ID")
-    name = Column(Text, index=True, unique=True, comment="Tag Name")
+    name = Column(Text, primary_key=True, comment="Tag Name")
 
     # back populate relationships
     missions: Mapped[List['MissionTag']] = relationship(back_populates="tag")
@@ -49,7 +48,7 @@ class MissionTag(Base):
     __tablename__ = "missiontag"
 
     # relationship
-    tag_id = Column(Integer, ForeignKey("tag.id"), primary_key=True, comment="Tag ID")
+    tag_name = Column(Text, ForeignKey("tag.name"), primary_key=True, comment="Tag")
     tag: Mapped['Tag'] = relationship(Tag, back_populates="missions")
 
     # relationship

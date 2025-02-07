@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from missionpanel.orm import Base, Mission, Tag, MissionTag, Matcher, Attempt
+from missionpanel.submitter import Submitter
 
 engine = create_engine("sqlite://", echo=True)
 Base.metadata.create_all(engine)
@@ -40,6 +41,14 @@ with Session(engine) as session:
             MissionTag(tag=hdtag)
         ]
     )
-    esmission = Mission(content="Easy")
+    esmission = Mission(content="Easy mission")
     session.add_all([exmission, hdmission, esmission])
     session.commit()
+    
+    submitter = Submitter(session)
+    submitter.create_mission(content="Easy mission", match_patterns=["Easy mission", "Easy Mission", "E Mission"])
+    submitter.create_mission(content="Hard mission", match_patterns=["Hard mission", "Hard Mission", "H Mission"])
+    submitter.create_mission(content="Ex Hard mission", match_patterns=["Ex Hard mission", "Ex Hard Mission", "EX Mission"])
+    submitter.add_tags(["Easy mission"], ["Mission", "mission"])
+    submitter.add_tags(["Hard mission"], ["Mission", "mission"])
+    submitter.add_tags(["Easy mission"], ["Mission", "mission"])
