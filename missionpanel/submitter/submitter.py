@@ -1,5 +1,4 @@
 from typing import List
-from sqlalchemy import or_
 from sqlalchemy.orm import Session
 from missionpanel.orm import Mission, Tag, Matcher, MissionTag
 
@@ -9,7 +8,7 @@ class Submitter:
         self.session = session
 
     def match_mission(self, match_patterns: List[str]) -> Mission:
-        matcher = self.session.query(Matcher).filter(or_(Matcher.pattern == pattern for pattern in match_patterns)).with_for_update().first()
+        matcher = self.session.query(Matcher).filter(Matcher.pattern.in_(match_patterns)).with_for_update().first()
         if matcher:
             exist_patterns = [matcher.pattern for matcher in matcher.mission.matchers]
             self.session.add_all([Matcher(pattern=pattern, mission=matcher.mission) for pattern in match_patterns if pattern not in exist_patterns])
@@ -29,7 +28,7 @@ class Submitter:
         self.session.commit()
 
     def _add_tags(self, mission: Mission, tags_name: List[str]):
-        exist_tags = self.session.query(Tag).filter(or_(Tag.name == tag_name for tag_name in tags_name)).with_for_update().all()
+        exist_tags = self.session.query(Tag).filter(Tag.name.in_(tags_name)).with_for_update().all()
         exist_tags_name = [tag.name for tag in exist_tags]
         self.session.add_all([Tag(name=tag_name) for tag_name in tags_name if tag_name not in exist_tags_name])
         exist_mission_tags = {mission_tag.tag_name: mission_tag.tag for mission_tag in mission.tags}
