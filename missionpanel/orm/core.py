@@ -29,7 +29,7 @@ class Mission(Base):
 
 class Matcher(Base):
     __tablename__ = "matcher"
-    name = Column(Text, primary_key=True, comment="Matcher Content")
+    pattern = Column(Text, primary_key=True, comment="Matcher Content")
 
     # relationship
     mission_id = Column(Integer, ForeignKey("mission.id"), index=True, comment="Mission ID")

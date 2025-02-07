@@ -16,10 +16,10 @@ with Session(engine) as session:
     exmission = Mission(
         content="Ex hard mission",
         matchers=[
-            Matcher(name="Ex hard"),
-            Matcher(name="Ex Hard"),
-            Matcher(name="Ex hard mission"),
-            Matcher(name="Ex Hard Mission"),
+            Matcher(pattern="Ex hard"),
+            Matcher(pattern="Ex Hard"),
+            Matcher(pattern="Ex hard mission"),
+            Matcher(pattern="Ex Hard Mission"),
         ],
         tags=[
             MissionTag(tag=extag),
@@ -32,9 +32,9 @@ with Session(engine) as session:
     hdmission = Mission(
         content="Hard mission",
         matchers=[
-            Matcher(name="Hard"),
-            Matcher(name="Hard mission"),
-            Matcher(name="Hard Mission"),
+            Matcher(pattern="Hard"),
+            Matcher(pattern="Hard mission"),
+            Matcher(pattern="Hard Mission"),
         ],
         tags=[
             MissionTag(tag=hdtag)
