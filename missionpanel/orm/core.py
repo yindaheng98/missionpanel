@@ -20,7 +20,7 @@ class Mission(Base):
     id = Column(Integer, primary_key=True, autoincrement=True, comment="Mission ID")
     content = Column(JSON, default={}, comment="Mission Content")
     create_time = Column(DateTime, default=datetime.datetime.now, comment="Mission Create Time")
-    last_update_time = Column(DateTime, onupdate=datetime.datetime.now, comment="Mission Update Time")
+    last_update_time = Column(DateTime, default=datetime.datetime.now, onupdate=datetime.datetime.now, comment="Mission Update Time")
 
     # back populate relationships
     matchers: Mapped[List['Matcher']] = relationship(back_populates="mission")
@@ -55,47 +55,3 @@ class MissionTag(Base):
     # relationship
     mission_id = Column(Integer, ForeignKey("mission.id"), primary_key=True, comment="Mission ID")
     mission: Mapped['Mission'] = relationship(Mission, back_populates="tags")
-
-
-if __name__ == "__main__":
-    from sqlalchemy import create_engine
-    from sqlalchemy.orm import Session
-
-    engine = create_engine("sqlite://", echo=True)
-    Base.metadata.create_all(engine)
-
-    with Session(engine) as session:
-        extag = Tag(
-            name="ex hard"
-        )
-        hdtag = Tag(
-            name="hard"
-        )
-        session.add_all([extag, hdtag])
-        exmission = Mission(
-            content="Ex hard mission",
-            matchers=[
-                Matcher(name="Ex hard"),
-                Matcher(name="Ex Hard"),
-                Matcher(name="Ex hard mission"),
-                Matcher(name="Ex Hard Mission"),
-            ],
-            tags=[
-                MissionTag(tag=extag),
-                MissionTag(tag=hdtag)
-            ]
-        )
-        hdmission = Mission(
-            content="Hard mission",
-            matchers=[
-                Matcher(name="Hard"),
-                Matcher(name="Hard mission"),
-                Matcher(name="Hard Mission"),
-            ],
-            tags=[
-                MissionTag(tag=hdtag)
-            ]
-        )
-        esmission = Mission(content="Easy")
-        session.add_all([exmission, hdmission, esmission])
-        session.commit()
