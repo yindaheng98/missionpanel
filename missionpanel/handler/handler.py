@@ -3,7 +3,7 @@ import datetime
 from typing import List, Optional
 from sqlalchemy.orm import Session, Query
 from missionpanel.orm import Mission, Tag, MissionTag, Attempt
-from sqlalchemy import func, distinct, or_, and_
+from sqlalchemy import func, distinct, not_, and_, or_
 
 
 class Handler(abc.ABC):
@@ -28,4 +28,20 @@ class Handler(abc.ABC):
             .filter(Tag.name.in_(tags))
             .group_by(Mission.id)
             .having(func.count(distinct(Tag.name)) == len(tags))
+        )
+
+    def query_todo_missions(self, tags: List[str]) -> Query[Mission]:
+        return (
+            self.query_missions_by_tag(tags)
+            .outerjoin(Attempt)
+            .filter(
+                (Attempt.id == None) |  # no attempt
+                not_(  # no finished attempt or other handler is working on it
+                    Attempt.content == Mission.content &
+                    (
+                        Attempt.success.is_(True) |  # finished
+                        Attempt.last_update_time + Attempt.max_time_interval >= datetime.datetime.now()  # some other handler is working on it
+                    ),
+                )
+            )
         )

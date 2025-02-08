@@ -64,5 +64,5 @@ with Session(engine) as session:
     submitter.add_tags(["Easy mission"], ["Mission", "mission"])
 
     handler = FakeHandler(session, "Ex hard handler")
-    missions = handler.query_missions_by_tag(["Mission", "mission"])
+    missions = handler.query_todo_missions(["Mission", "mission"])
     print(missions.all())
