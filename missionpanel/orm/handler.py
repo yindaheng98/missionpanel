@@ -26,3 +26,6 @@ class Attempt(Base):
     # relationship
     mission_id = Column(Integer, ForeignKey("mission.id"), comment="Mission ID")
     mission: Mapped['Mission'] = relationship(Mission, backref="attempts")
+
+    def __repr__(self):
+        return f"Attempt(id={self.id}, handler={self.handler.__repr__()}, create_time={self.create_time.__repr__()}, last_update_time={self.last_update_time.__repr__()}, max_time_interval={self.max_time_interval.__repr__()}, content={self.content.__repr__()}, success={self.success}, mission_id={self.mission_id})"

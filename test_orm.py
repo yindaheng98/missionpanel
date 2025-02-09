@@ -25,7 +25,7 @@ with Session(engine) as session:
     )
     session.add_all([extag, hdtag])
     exmission = Mission(
-        content="Ex hard mission",
+        content={"name": "Ex hard mission"},
         matchers=[
             Matcher(pattern="Ex hard"),
             Matcher(pattern="Ex Hard"),
@@ -41,7 +41,7 @@ with Session(engine) as session:
         ]
     )
     hdmission = Mission(
-        content="Hard mission",
+        content={"name": "Hard mission"},
         matchers=[
             Matcher(pattern="Hard"),
             Matcher(pattern="Hard mission"),
@@ -51,17 +51,17 @@ with Session(engine) as session:
             MissionTag(tag=hdtag)
         ]
     )
-    esmission = Mission(content="Easy mission")
+    esmission = Mission(content={"name": "Easy mission"})
     session.add_all([exmission, hdmission, esmission])
     session.commit()
 
     submitter = Submitter(session)
-    submitter.create_mission(content="Easy mission", match_patterns=["Easy mission", "Easy Mission", "E Mission"])
-    submitter.create_mission(content="Hard mission", match_patterns=["Hard mission", "Hard Mission", "H Mission"])
-    submitter.create_mission(content="Ex Hard mission", match_patterns=["Ex Hard mission", "Ex Hard Mission", "EX Mission"])
+    submitter.create_mission(content={"name": "Easy mission"}, match_patterns=["Easy mission", "Easy Mission", "E Mission"])
+    submitter.create_mission(content={"name": "Hard mission"}, match_patterns=["Hard mission", "Hard Mission", "H Mission"])
+    submitter.create_mission(content={"name": "Ex Hard mission"}, match_patterns=["Ex Hard mission", "Ex Hard Mission", "EX Mission"])
     submitter.add_tags(["Easy mission"], ["Mission", "mission"])
     submitter.add_tags(["Hard mission"], ["Mission", "mission"])
-    submitter.add_tags(["Easy mission"], ["Mission", "mission"])
+    submitter.add_tags(["Ex Hard mission"], ["Mission", "mission"])
 
     handler = FakeHandler(session, "Ex hard handler")
     missions = handler.query_todo_missions(["Mission", "mission"])
