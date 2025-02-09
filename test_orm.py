@@ -10,6 +10,7 @@ class FakeHandler(Handler):
         return missions[0] if missions else None
 
     def execute_mission(self, mission, attempt):
+        print(f"Attempt {attempt.id} is executing mission {mission.content['name']}")
         return True
 
 
@@ -63,6 +64,9 @@ with Session(engine) as session:
     submitter.add_tags(["Hard mission"], ["Mission", "mission"])
     submitter.add_tags(["Ex Hard mission"], ["Mission", "mission"])
 
+    # test handler
+
     handler = FakeHandler(session, "Ex hard handler")
-    missions = handler.query_todo_missions(["Mission", "mission"])
-    print(missions.all())
+    handler.run_once(["Mission", "mission"])
+    handler.run_once(["Mission", "mission"])
+    handler.run_once(["Mission", "mission"])

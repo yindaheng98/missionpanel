@@ -3,7 +3,7 @@ import datetime
 from typing import List, Optional
 from sqlalchemy.orm import Session, Query
 from missionpanel.orm import Mission, Tag, MissionTag, Attempt
-from sqlalchemy import func, distinct, not_, and_, or_
+from sqlalchemy import func, distinct, case
 
 
 class Handler(abc.ABC):
@@ -34,14 +34,26 @@ class Handler(abc.ABC):
         return (
             self.query_missions_by_tag(tags)
             .outerjoin(Attempt)
-            .filter(
-                (Attempt.id == None) |  # no attempt
-                not_(  # no finished attempt or other handler is working on it
-                    Attempt.content == Mission.content &
-                    (
-                        Attempt.success.is_(True) |  # finished
-                        Attempt.last_update_time + Attempt.max_time_interval >= datetime.datetime.now()  # some other handler is working on it
-                    ),
-                )
-            )
+            .group_by(Mission.id)
+            .having(func.count(
+                case(((  # see if Attempt is finished or working on the Mission
+                    Attempt.success.is_(True) |  # have finished handler
+                    (Attempt.last_update_time + Attempt.max_time_interval >= datetime.datetime.now())  # have working handler
+                ), 0), else_=None)) <= 0)  # get those Missions that have no finished or working Attempt
         )
+
+    def run_once(self, tags: List[str]):
+        missions = self.query_todo_missions(tags).all()
+        mission = self.select_mission(missions)
+        if mission is None:
+            return
+        attempt = Attempt(
+            handler=self.name,
+            max_time_interval=self.max_time_interval,
+            content=mission.content,
+            mission=mission)
+        self.session.add(attempt)
+        self.session.commit()
+        if self.execute_mission(mission, attempt):
+            attempt.success = True
+            self.session.commit()
