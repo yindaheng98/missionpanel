@@ -1,19 +1,27 @@
-from typing import List
+from typing import List, Union, Tuple
 from sqlalchemy.orm import Session
 from sqlalchemy.ext.asyncio import AsyncSession
 from missionpanel.orm import Mission, Tag, Matcher, MissionTag
-from sqlalchemy import select
+from sqlalchemy import Sequence, select, Select
 
 
 class SubmitterInterface:
     @staticmethod
+    def query_matcher(match_patterns: List[str]) -> Select[Tuple[Matcher]]:
+        return select(Matcher).where(Matcher.pattern.in_(match_patterns)).limit(1).with_for_update()
+
+    @staticmethod
+    def add_mission_matchers(session: Union[Session | AsyncSession], match_patterns: List[str], existing_matcher: Union[Matcher | None] = None) -> Mission:
+        if not existing_matcher:
+            return
+        exist_patterns = [matcher.pattern for matcher in existing_matcher.mission.matchers]
+        session.add_all([Matcher(pattern=pattern, mission=existing_matcher.mission) for pattern in match_patterns if pattern not in exist_patterns])
+        return existing_matcher.mission
+
+    @staticmethod
     def match_mission(session: Session, match_patterns: List[str]) -> Mission:
-        select_stmt = select(Matcher).where(Matcher.pattern.in_(match_patterns)).limit(1).with_for_update()
-        matcher = session.execute(select_stmt).scalars().first()
-        if matcher:
-            exist_patterns = [matcher.pattern for matcher in matcher.mission.matchers]
-            session.add_all([Matcher(pattern=pattern, mission=matcher.mission) for pattern in match_patterns if pattern not in exist_patterns])
-            return matcher.mission
+        matcher = session.execute(SubmitterInterface.query_matcher(match_patterns)).scalars().first()
+        return SubmitterInterface.add_mission_matchers(session, match_patterns, matcher)
 
     @staticmethod
     def create_mission(session: Session, content: str, match_patterns: List[str]):
@@ -30,9 +38,11 @@ class SubmitterInterface:
         return mission
 
     @staticmethod
-    def _add_tags(session: Session, mission: Mission, tags_name: List[str]):
-        select_stmt = select(Tag).where(Tag.name.in_(tags_name)).with_for_update()
-        exist_tags = session.execute(select_stmt).scalars().all()
+    def query_tag(tags_name: List[str]) -> Select[Tuple[Matcher]]:
+        return select(Tag).where(Tag.name.in_(tags_name)).with_for_update()
+
+    @staticmethod
+    def add_mission_tags(session: Session, mission: Mission, tags_name: List[str], exist_tags: Sequence[Tag] = []):
         exist_tags_name = [tag.name for tag in exist_tags]
         tags = [Tag(name=tag_name) for tag_name in tags_name if tag_name not in exist_tags_name]
         session.add_all(tags)
@@ -42,7 +52,9 @@ class SubmitterInterface:
 
     @staticmethod
     def add_tags(session: Session, matchers: List[str], tags: List[str]):
-        SubmitterInterface._add_tags(session, SubmitterInterface.match_mission(session, matchers), tags)
+        mission = SubmitterInterface.match_mission(session, matchers)
+        exist_tags = session.execute(SubmitterInterface.query_tag(tags)).scalars().all()
+        return SubmitterInterface.add_mission_tags(session, mission, tags, exist_tags)
 
 
 class Submitter(SubmitterInterface):

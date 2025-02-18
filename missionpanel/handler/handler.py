@@ -1,6 +1,6 @@
 import abc
 import datetime
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 from sqlalchemy.orm import Session, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from missionpanel.orm import Mission, Tag, MissionTag, Attempt
@@ -34,7 +34,7 @@ class HandlerInterface(abc.ABC):
         )
 
     @staticmethod
-    def create_attempt(session: Session, mission: Mission, name: str, max_time_interval: datetime.timedelta = datetime.timedelta(seconds=1)) -> Attempt:
+    def create_attempt(session: Union[Session | AsyncSession], mission: Mission, name: str, max_time_interval: datetime.timedelta = datetime.timedelta(seconds=1)) -> Attempt:
         attempt = Attempt(
             handler=name,
             max_time_interval=max_time_interval,
@@ -86,7 +86,7 @@ class AsyncHandler(HandlerInterface, abc.ABC):
         pass
 
     async def run_once(self, tags: List[str]):
-        missions = (await HandlerInterface.query_todo_missions(tags)).all()
+        missions = (await self.session.execute(HandlerInterface.query_todo_missions(tags))).scalars().all()
         mission = await self.select_mission(missions)
         if mission is None:
             return
