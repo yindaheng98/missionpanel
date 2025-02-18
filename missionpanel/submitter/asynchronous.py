@@ -1,8 +1,6 @@
 from typing import List, Union
-from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
-from missionpanel.orm import Mission, MissionTag
-from sqlalchemy import select
+from missionpanel.orm import Mission
 from .abc import SubmitterInterface
 
 
@@ -13,14 +11,15 @@ class AsyncSubmitterInterface(SubmitterInterface):
         matcher = (await session.execute(SubmitterInterface.query_matcher(match_patterns))).scalars().first()
         if matcher is None:
             return None
-        mission = (await session.execute(select(Mission).where(Mission.id == matcher.mission_id).options(selectinload(Mission.matchers)))).scalars().first()
-        SubmitterInterface.add_mission_matchers(session, mission, match_patterns, mission.matchers)
+        mission = await matcher.awaitable_attrs.mission
+        existing_matchers = await mission.awaitable_attrs.matchers
+        SubmitterInterface.add_mission_matchers(session, mission, match_patterns, existing_matchers)
         return mission
 
     @staticmethod
     async def _add_tags(session: AsyncSession, mission: Union[Mission | None] = None, tags: List[str] = []):
         exist_tags = (await session.execute(SubmitterInterface.query_tag(tags))).scalars().all() if len(tags) > 0 else []
-        exist_mission_tags = (await session.execute(select(MissionTag).where(MissionTag.mission_id == mission.id))).scalars().all()
+        exist_mission_tags = await mission.awaitable_attrs.tags
         tags = SubmitterInterface.add_mission_tags(session, mission, tags, exist_tags, exist_mission_tags)
         return tags
 
