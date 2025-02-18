@@ -20,8 +20,7 @@ class AsyncSubmitterInterface(SubmitterInterface):
     async def _add_tags(session: AsyncSession, mission: Union[Mission | None] = None, tags: List[str] = []):
         exist_tags = (await session.execute(SubmitterInterface.query_tag(tags))).scalars().all() if len(tags) > 0 else []
         exist_mission_tags = await mission.awaitable_attrs.tags
-        tags = SubmitterInterface.add_mission_tags(session, mission, tags, exist_tags, exist_mission_tags)
-        return tags
+        SubmitterInterface.add_mission_tags(session, mission, tags, exist_tags, exist_mission_tags)
 
     @staticmethod
     async def match_mission(session: AsyncSession, match_patterns: List[str]) -> Mission:
@@ -42,9 +41,8 @@ class AsyncSubmitterInterface(SubmitterInterface):
         mission = await AsyncSubmitterInterface._query_mission(session, match_patterns)
         if mission is None:
             raise ValueError("Mission not found")
-        tags = await AsyncSubmitterInterface._add_tags(session, mission, tags)
+        await AsyncSubmitterInterface._add_tags(session, mission, tags)
         await session.commit()
-        return tags
 
 
 class AsyncSubmitter(AsyncSubmitterInterface):

@@ -18,7 +18,6 @@ class SyncSubmitterInterface(SubmitterInterface):
     def _add_tags(session: Session, mission: Union[Mission | None] = None, tags: List[str] = []):
         exist_tags = session.execute(SubmitterInterface.query_tag(tags)).scalars().all()
         tags = SubmitterInterface.add_mission_tags(session, mission, tags, exist_tags, mission.tags)
-        return tags
 
     @staticmethod
     def match_mission(session: Session, match_patterns: List[str]) -> Mission:
@@ -39,9 +38,8 @@ class SyncSubmitterInterface(SubmitterInterface):
         mission = SyncSubmitterInterface._query_mission(session, match_patterns)
         if mission is None:
             raise ValueError("Mission not found")
-        tags = SyncSubmitterInterface._add_tags(session, mission, tags)
+        SyncSubmitterInterface._add_tags(session, mission, tags)
         session.commit()
-        return tags
 
 
 class Submitter(SyncSubmitterInterface):
