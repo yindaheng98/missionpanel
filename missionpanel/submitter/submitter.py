@@ -2,12 +2,14 @@ from typing import List
 from sqlalchemy.orm import Session
 from sqlalchemy.ext.asyncio import AsyncSession
 from missionpanel.orm import Mission, Tag, Matcher, MissionTag
+from sqlalchemy import select
 
 
 class SubmitterInterface:
     @staticmethod
     def match_mission(session: Session, match_patterns: List[str]) -> Mission:
-        matcher = session.query(Matcher).filter(Matcher.pattern.in_(match_patterns)).with_for_update().first()
+        select_stmt = select(Matcher).where(Matcher.pattern.in_(match_patterns)).limit(1).with_for_update()
+        matcher = session.execute(select_stmt).scalars().first()
         if matcher:
             exist_patterns = [matcher.pattern for matcher in matcher.mission.matchers]
             session.add_all([Matcher(pattern=pattern, mission=matcher.mission) for pattern in match_patterns if pattern not in exist_patterns])
@@ -29,7 +31,8 @@ class SubmitterInterface:
 
     @staticmethod
     def _add_tags(session: Session, mission: Mission, tags_name: List[str]):
-        exist_tags = session.query(Tag).filter(Tag.name.in_(tags_name)).with_for_update().all()
+        select_stmt = select(Tag).where(Tag.name.in_(tags_name)).with_for_update()
+        exist_tags = session.execute(select_stmt).scalars().all()
         exist_tags_name = [tag.name for tag in exist_tags]
         tags = [Tag(name=tag_name) for tag_name in tags_name if tag_name not in exist_tags_name]
         session.add_all(tags)

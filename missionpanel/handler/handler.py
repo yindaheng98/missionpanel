@@ -1,18 +1,18 @@
 import abc
 import datetime
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from sqlalchemy.orm import Session, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from missionpanel.orm import Mission, Tag, MissionTag, Attempt
-from sqlalchemy import func, distinct, case
+from sqlalchemy import select, func, distinct, case, Select
 
 
 class HandlerInterface(abc.ABC):
 
     @staticmethod
-    def query_missions_by_tag(session: Session, tags: List[str]) -> Query[Mission]:
+    def query_missions_by_tag(tags: List[str]) -> Select[Tuple[Mission]]:
         return (
-            session.query(Mission)
+            select(Mission)
             .join(MissionTag)
             .join(Tag)
             .filter(Tag.name.in_(tags))
@@ -21,9 +21,9 @@ class HandlerInterface(abc.ABC):
         )
 
     @staticmethod
-    def query_todo_missions(session: Session, tags: List[str]) -> Query[Mission]:
+    def query_todo_missions(tags: List[str]) -> Select[Tuple[Mission]]:
         return (
-            HandlerInterface.query_missions_by_tag(session, tags)
+            HandlerInterface.query_missions_by_tag(tags)
             .outerjoin(Attempt)
             .group_by(Mission.id)
             .having(func.count(
@@ -59,7 +59,7 @@ class Handler(HandlerInterface, abc.ABC):
         pass
 
     def run_once(self, tags: List[str]):
-        missions = HandlerInterface.query_todo_missions(self.session, tags).all()
+        missions = self.session.execute(HandlerInterface.query_todo_missions(tags)).scalars().all()
         mission = self.select_mission(missions)
         if mission is None:
             return
@@ -86,7 +86,7 @@ class AsyncHandler(HandlerInterface, abc.ABC):
         pass
 
     async def run_once(self, tags: List[str]):
-        missions = (await HandlerInterface.query_todo_missions(self.session, tags)).all()
+        missions = (await HandlerInterface.query_todo_missions(tags)).all()
         mission = await self.select_mission(missions)
         if mission is None:
             return
