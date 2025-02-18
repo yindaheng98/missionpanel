@@ -14,10 +14,7 @@ class FakeHandler(Handler):
         return True
 
 
-engine = create_engine("sqlite://", echo=True)
-Base.metadata.create_all(engine)
-
-with Session(engine) as session:
+def main(session: Session):
     extag = Tag(
         name="ex hard"
     )
@@ -70,3 +67,10 @@ with Session(engine) as session:
     handler.run_once(["Mission", "mission"])
     handler.run_once(["Mission", "mission"])
     handler.run_once(["Mission", "mission"])
+
+
+if __name__ == "__main__":
+    engine = create_engine("sqlite://", echo=True)
+    Base.metadata.create_all(engine)
+    with Session(engine) as session:
+        main(session)

@@ -2,6 +2,7 @@ import abc
 import datetime
 from typing import List, Optional
 from sqlalchemy.orm import Session, Query
+from sqlalchemy.ext.asyncio import AsyncSession
 from missionpanel.orm import Mission, Tag, MissionTag, Attempt
 from sqlalchemy import func, distinct, case
 
@@ -67,4 +68,32 @@ class Handler(HandlerInterface, abc.ABC):
         if self.execute_mission(mission, attempt):
             attempt.success = True
         self.session.commit()
+        return attempt
+
+
+class AsyncHandler(HandlerInterface, abc.ABC):
+    def __init__(self, session: AsyncSession, name: str, max_time_interval: datetime.timedelta = datetime.timedelta(seconds=1)):
+        self.session = session
+        self.name = name
+        self.max_time_interval = max_time_interval
+
+    @abc.abstractmethod
+    async def select_mission(self, missions: Query[Mission]) -> Optional[Mission]:
+        return missions[0] if missions else None
+
+    @abc.abstractmethod
+    async def execute_mission(self, mission: Mission, attempt: Attempt) -> bool:
+        pass
+
+    async def run_once(self, tags: List[str]):
+        missions = (await HandlerInterface.query_todo_missions(self.session, tags)).all()
+        mission = await self.select_mission(missions)
+        if mission is None:
+            return
+        async with self.session.begin():
+            attempt = HandlerInterface.create_attempt(self.session, mission, self.name, self.max_time_interval)
+        await self.session.commit()
+        if await self.execute_mission(mission, attempt):
+            attempt.success = True
+        await self.session.commit()
         return attempt

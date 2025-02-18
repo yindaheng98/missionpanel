@@ -1,5 +1,6 @@
 from typing import List
 from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from missionpanel.orm import Mission, Tag, Matcher, MissionTag
 
 
@@ -58,4 +59,27 @@ class Submitter(SubmitterInterface):
     def add_tags(self, matchers: List[str], tags: List[str]):
         tags = SubmitterInterface.add_tags(self.session, matchers, tags)
         self.session.commit()
+        return tags
+
+
+class AsyncSubmitter(SubmitterInterface):
+    def __init__(self, session: AsyncSession):
+        self.session = session
+
+    async def match_mission(self, match_patterns: List[str]) -> Mission:
+        async with self.session.begin():
+            mission = SubmitterInterface.match_mission(self.session, match_patterns)
+        await self.session.commit()
+        return mission
+
+    async def create_mission(self, content: str, match_patterns: List[str]):
+        async with self.session.begin():
+            mission = SubmitterInterface.create_mission(self.session, content, match_patterns)
+        await self.session.commit()
+        return mission
+
+    async def add_tags(self, matchers: List[str], tags: List[str]):
+        async with self.session.begin():
+            tags = SubmitterInterface.add_tags(self.session, matchers, tags)
+        await self.session.commit()
         return tags
