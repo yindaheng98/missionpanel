@@ -6,10 +6,10 @@ from missionpanel.handler import AsyncHandler
 
 
 class FakeHandler(AsyncHandler):
-    def select_mission(self, missions):
+    async def select_mission(self, missions):
         return missions[0] if missions else None
 
-    def execute_mission(self, mission, attempt):
+    async def execute_mission(self, mission, attempt):
         print(f"Attempt {attempt.id} is executing mission {mission.content['name']}")
         return True
 
