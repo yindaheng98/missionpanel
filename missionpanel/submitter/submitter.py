@@ -11,12 +11,9 @@ class SubmitterInterface:
         return select(Matcher).where(Matcher.pattern.in_(match_patterns)).limit(1).with_for_update()
 
     @staticmethod
-    def add_mission_matchers(session: Union[Session | AsyncSession], match_patterns: List[str], existing_matcher: Union[Matcher | None] = None) -> Mission:
-        if not existing_matcher:
-            return
-        exist_patterns = [matcher.pattern for matcher in existing_matcher.mission.matchers]
-        session.add_all([Matcher(pattern=pattern, mission=existing_matcher.mission) for pattern in match_patterns if pattern not in exist_patterns])
-        return existing_matcher.mission
+    def add_mission_matchers(session: Union[Session | AsyncSession], mission: Mission, match_patterns: List[str], existing_matchers: List[Matcher] = []) -> Mission:
+        exist_patterns = [matcher.pattern for matcher in existing_matchers]
+        session.add_all([Matcher(pattern=pattern, mission=mission) for pattern in match_patterns if pattern not in exist_patterns])
 
     @staticmethod
     def create_mission(session: Union[Session | AsyncSession], content: str, match_patterns: List[str], existing_mission: Union[Mission | None] = None) -> Mission:
@@ -49,8 +46,10 @@ class SyncSubmitterInterface(SubmitterInterface):
     @staticmethod
     def _query_mission(session: Session, match_patterns: List[str]) -> Mission:
         matcher = session.execute(SubmitterInterface.query_matcher(match_patterns)).scalars().first()
-        mission = SubmitterInterface.add_mission_matchers(session, match_patterns, matcher)
-        return mission
+        if matcher is None:
+            return None
+        SubmitterInterface.add_mission_matchers(session, matcher.mission, match_patterns, matcher.mission.matchers)
+        return matcher.mission
 
     @staticmethod
     def _add_tags(session: Session, mission: Union[Mission | None] = None, tags: List[str] = []):
@@ -102,13 +101,16 @@ class AsyncSubmitterInterface(SubmitterInterface):
     @staticmethod
     async def _query_mission(session: AsyncSession, match_patterns: List[str]) -> Mission:
         matcher = (await session.execute(SubmitterInterface.query_matcher(match_patterns))).scalars().first()
-        mission = SubmitterInterface.add_mission_matchers(session, match_patterns, matcher)
+        if matcher is None:
+            return None
+        mission = (await session.execute(select(Mission).where(Mission.id == matcher.mission_id).options(selectinload(Mission.matchers)))).scalars().first()
+        SubmitterInterface.add_mission_matchers(session, mission, match_patterns, mission.matchers)
         return mission
 
     @staticmethod
     async def _add_tags(session: AsyncSession, mission: Union[Mission | None] = None, tags: List[str] = []):
-        exist_tags = (await session.execute(SubmitterInterface.query_tag(tags))).scalars().all()
-        exist_mission_tags = [mission_tag.tag for mission_tag in mission.tags]  # TODO: fix Implicit IO
+        exist_tags = (await session.execute(SubmitterInterface.query_tag(tags))).scalars().all() if len(tags) > 0 else []
+        exist_mission_tags = (await session.execute(select(Tag).join(MissionTag).filter(MissionTag.mission_id == mission.id))).scalars().all()
         tags = SubmitterInterface.add_mission_tags(session, mission, tags, exist_tags, exist_mission_tags)
         return tags
 

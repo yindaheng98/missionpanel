@@ -10,6 +10,8 @@ class FakeHandler(AsyncHandler):
         return missions[0] if missions else None
 
     async def execute_mission(self, mission, attempt):
+        print(attempt.id)
+        print(mission.content['name'])
         print(f"Attempt {attempt.id} is executing mission {mission.content['name']}")
         return True
 
