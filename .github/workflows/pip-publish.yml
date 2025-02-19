@@ -1,0 +1,37 @@
+name: Pip
+
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - name: Install
+        run: |
+          pip install twine setuptools
+
+      - name: Build
+        run: |
+          python setup.py sdist
+
+      - name: Upload
+        env:
+          PIP_API_TOKEN: ${{ secrets.PIP_API_TOKEN }}
+        run: |
+          python -m twine upload dist/* --username __token__ --password ${PIP_API_TOKEN} --skip-existing
