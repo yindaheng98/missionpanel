@@ -34,6 +34,7 @@ class AsyncSubmitterInterface(SubmitterInterface):
         mission = SubmitterInterface.create_mission(session, content, match_patterns, mission)
         await AsyncSubmitterInterface._add_tags(session, mission, tags)
         await session.commit()
+        await session.refresh(mission)
         return mission
 
     @staticmethod

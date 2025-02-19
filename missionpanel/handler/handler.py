@@ -54,6 +54,11 @@ class Handler(HandlerInterface, abc.ABC):
     def select_mission(self, missions: Query[Mission]) -> Optional[Mission]:
         return missions[0] if missions else None
 
+    def report_attempt(self, mission: Mission, attempt: Attempt):
+        attempt.success = False
+        attempt.last_update_time = datetime.datetime.now()
+        self.session.commit()
+
     @abc.abstractmethod
     def execute_mission(self, mission: Mission, attempt: Attempt) -> bool:
         pass
@@ -64,10 +69,10 @@ class Handler(HandlerInterface, abc.ABC):
         if mission is None:
             return
         attempt = HandlerInterface.create_attempt(self.session, mission, self.name, self.max_time_interval)
-        self.session.commit()
+        self.report_attempt(mission, attempt)
         if self.execute_mission(mission, attempt):
             attempt.success = True
-        self.session.commit()
+        self.report_attempt(mission, attempt)
         return attempt
 
 
@@ -81,6 +86,12 @@ class AsyncHandler(HandlerInterface, abc.ABC):
     async def select_mission(self, missions: Query[Mission]) -> Optional[Mission]:
         return missions[0] if missions else None
 
+    async def report_attempt(self, mission: Mission, attempt: Attempt):
+        attempt.last_update_time = datetime.datetime.now()
+        await self.session.commit()
+        await self.session.refresh(attempt)
+        await self.session.refresh(mission)
+
     @abc.abstractmethod
     async def execute_mission(self, mission: Mission, attempt: Attempt) -> bool:
         pass
@@ -90,10 +101,9 @@ class AsyncHandler(HandlerInterface, abc.ABC):
         mission = await self.select_mission(missions)
         if mission is None:
             return
-        async with self.session.begin():
-            attempt = HandlerInterface.create_attempt(self.session, mission, self.name, self.max_time_interval)
-        await self.session.commit()
+        attempt = HandlerInterface.create_attempt(self.session, mission, self.name, self.max_time_interval)
+        await self.report_attempt(mission, attempt)
         if await self.execute_mission(mission, attempt):
             attempt.success = True
-        await self.session.commit()
+        await self.report_attempt(mission, attempt)
         return attempt
