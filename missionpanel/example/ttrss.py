@@ -136,7 +136,8 @@ class TTRRSSHubRootSubmitter(TTRSSHubSubmitter):
         root = ElementTree.XML(xml)
         yield {
             'url': root.find('channel/link').text,
-            'latest': [item.find('link').text for item in root.iter('item')][0]
+            'latest': [item.find('link').text for item in root.iter('item')][0],
+            **feed
         }
 
 
@@ -145,4 +146,4 @@ class TTRRSSHubSubitemSubmitter(TTRSSHubSubmitter):
     async def parse_xml(self, xml: str, feed: dict, content: dict) -> AsyncGenerator[dict, Any]:
         root = ElementTree.XML(xml)
         for item in root.find('channel').iter('item'):
-            yield {'url': item.find('link').text}
+            yield {'url': item.find('link').text, **feed}
