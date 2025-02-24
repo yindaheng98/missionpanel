@@ -2,7 +2,7 @@ import abc
 import asyncio
 import json
 import logging
-from typing import Any, AsyncGenerator, Dict, List
+from typing import Any, AsyncGenerator, Dict, List, Union
 import httpx
 from xml.etree import ElementTree
 from missionpanel.submitter import AsyncSubmitter
@@ -110,7 +110,13 @@ class TTRSSHubSubmitter(TTRSSSubmitter):
     async def parse_xml(self, xml: str) -> AsyncGenerator[Any, None]:
         pass
 
+    async def preprocess(self, feed: dict, content: dict) -> Union[Dict, None]:
+        return feed
+
     async def parse_content_nocatch(self, feed: dict, content: dict, **httpx_client_options) -> AsyncGenerator[Any, None]:
+        feed = await self.preprocess(feed, content)
+        if feed is None:
+            return
         async with httpx.AsyncClient(**httpx_client_options) as client:
             response = await client.get(feed['feed_url'])
             async for mission_content in self.parse_xml(response.text):
