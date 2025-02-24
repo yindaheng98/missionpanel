@@ -71,7 +71,7 @@ class TTRSSClient(httpx.AsyncClient):
 class TTRSSSubmitter(AsyncSubmitter, metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
-    async def parse_content(self, feed: dict, content: dict) -> AsyncGenerator[Any, None]:
+    async def parse_content(self, feed: dict, content: dict) -> AsyncGenerator[dict, Any]:
         pass
 
     async def derive_tags(self, mission_content) -> List[str]:
@@ -107,13 +107,13 @@ class TTRSSHubSubmitter(TTRSSSubmitter):
     logger = logging.getLogger("TTRSSHubSubmitter")
 
     @abc.abstractmethod
-    async def parse_xml(self, xml: str, feed: dict, content: dict) -> AsyncGenerator[Any, None]:
+    async def parse_xml(self, xml: str, feed: dict, content: dict) -> AsyncGenerator[dict, Any]:
         pass
 
     async def preprocess(self, feed: dict, content: dict) -> Union[Dict, None]:
         return feed
 
-    async def parse_content_nocatch(self, feed: dict, content: dict, **httpx_client_options) -> AsyncGenerator[Any, None]:
+    async def parse_content_nocatch(self, feed: dict, content: dict, **httpx_client_options) -> AsyncGenerator[dict, Any]:
         feed = await self.preprocess(feed, content)
         if feed is None:
             return
@@ -122,7 +122,7 @@ class TTRSSHubSubmitter(TTRSSSubmitter):
             async for mission_content in self.parse_xml(response.text, feed, content):
                 yield mission_content
 
-    async def parse_content(self, feed: dict, content: dict, **httpx_client_options) -> AsyncGenerator[Any, None]:
+    async def parse_content(self, feed: dict, content: dict, **httpx_client_options) -> AsyncGenerator[dict, Any]:
         try:
             async for mission_content in self.parse_content_nocatch(feed, content, **httpx_client_options):
                 yield mission_content
@@ -132,7 +132,7 @@ class TTRSSHubSubmitter(TTRSSSubmitter):
 
 class TTRRSSHubRootSubmitter(TTRSSHubSubmitter):
 
-    async def parse_xml(self, xml: str, feed: dict, content: dict) -> AsyncGenerator[str, None]:
+    async def parse_xml(self, xml: str, feed: dict, content: dict) -> AsyncGenerator[dict, Any]:
         root = ElementTree.XML(xml)
         yield {
             'url': root.find('channel/link').text,
@@ -142,7 +142,7 @@ class TTRRSSHubRootSubmitter(TTRSSHubSubmitter):
 
 class TTRRSSHubSubitemSubmitter(TTRSSHubSubmitter):
 
-    async def parse_xml(self, xml: str, feed: dict, content: dict) -> AsyncGenerator[str, None]:
+    async def parse_xml(self, xml: str, feed: dict, content: dict) -> AsyncGenerator[dict, Any]:
         root = ElementTree.XML(xml)
         for item in root.find('channel').iter('item'):
             yield {'url': item.find('link').text}

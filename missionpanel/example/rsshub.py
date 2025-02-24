@@ -8,7 +8,7 @@ from missionpanel.submitter import AsyncSubmitter
 class RSSHubSubmitter(AsyncSubmitter, metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
-    async def parse_xml(self, xml: str) -> AsyncGenerator[Any, None]:
+    async def parse_xml(self, xml: str) -> AsyncGenerator[dict, Any]:
         pass
 
     async def derive_tags(self, mission_content) -> List[str]:
@@ -30,7 +30,7 @@ class RSSHubSubmitter(AsyncSubmitter, metaclass=abc.ABCMeta):
 
 class RSSHubRootSubmitter(RSSHubSubmitter):
 
-    async def parse_xml(self, xml: str) -> AsyncGenerator[str, None]:
+    async def parse_xml(self, xml: str) -> AsyncGenerator[dict, Any]:
         root = ElementTree.XML(xml)
         yield {
             'url': root.find('channel/link').text,
@@ -40,7 +40,7 @@ class RSSHubRootSubmitter(RSSHubSubmitter):
 
 class RSSHubSubitemSubmitter(RSSHubSubmitter):
 
-    async def parse_xml(self, xml: str) -> AsyncGenerator[str, None]:
+    async def parse_xml(self, xml: str) -> AsyncGenerator[dict, Any]:
         root = ElementTree.XML(xml)
         for item in root.find('channel').iter('item'):
             yield {'url': item.find('link').text}
