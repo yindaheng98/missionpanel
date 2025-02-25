@@ -2,7 +2,7 @@ import asyncio
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, AsyncEngine
 from missionpanel.orm import Base
 from missionpanel.example import RSSHubRootSubmitter, RSSHubSubitemSubmitter
-from missionpanel.example import TTRRSSHubRootSubmitter
+from missionpanel.example import TTRSSHubRootSubmitter
 
 
 class TagRSSHubSubitemSubmitter(RSSHubSubitemSubmitter):

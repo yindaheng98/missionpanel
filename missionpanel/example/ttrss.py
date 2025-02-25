@@ -130,7 +130,7 @@ class TTRSSHubSubmitter(TTRSSSubmitter):
             self.logger.warning(f'parse content failed, error: {e}')
 
 
-class TTRRSSHubRootSubmitter(TTRSSHubSubmitter):
+class TTRSSHubRootSubmitter(TTRSSHubSubmitter):
 
     async def parse_xml(self, xml: str, feed: dict, content: dict) -> AsyncGenerator[dict, Any]:
         root = ElementTree.XML(xml)
@@ -141,7 +141,7 @@ class TTRRSSHubRootSubmitter(TTRSSHubSubmitter):
         }
 
 
-class TTRRSSHubSubitemSubmitter(TTRSSHubSubmitter):
+class TTRSSHubSubitemSubmitter(TTRSSHubSubmitter):
 
     async def parse_xml(self, xml: str, feed: dict, content: dict) -> AsyncGenerator[dict, Any]:
         root = ElementTree.XML(xml)
