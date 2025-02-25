@@ -88,26 +88,31 @@ class TTRSSSubmitter(AsyncSubmitter, metaclass=abc.ABCMeta):
                 "limit": None
             })
 
+            mission_content_queue = asyncio.Queue(len(feeds))
+
             async def feed_task(feed):
-                content = await client.api({
-                    "op": "getHeadlines",
-                    "feed_id": feed['id'],
-                    "limit": 1,
-                    "view_mode": "all_articles",
-                    "order_by": "feed_dates"
-                })
-                async for mission_content in self.parse_content(feed, content, **httpx_client_options):
+                async with semaphore:
+                    content = await client.api({
+                        "op": "getHeadlines",
+                        "feed_id": feed['id'],
+                        "limit": 1,
+                        "view_mode": "all_articles",
+                        "order_by": "feed_dates"
+                    })
+                    async for mission_content in self.parse_content(feed, content, **httpx_client_options):
+                        await mission_content_queue.put(mission_content)
+
+            async def mission_task():
+                for _ in range(len(feeds)):
+                    mission_content = await mission_content_queue.get()
                     matchers = await self.derive_matcher(mission_content)
                     await self.create_mission(mission_content, matchers)
                     tags = await self.derive_tags(mission_content)
                     if len(tags) > 0:
                         await self.add_tags(matchers, tags)
+                    mission_content_queue.task_done()
 
-            async def semaphore_task(feed):
-                async with semaphore:
-                    await feed_task(feed)
-
-            await asyncio.gather(*[semaphore_task(feed) for feed in feeds])
+            await asyncio.gather(mission_task(), *[feed_task(feed) for feed in feeds])
 
 
 class TTRSSHubSubmitter(TTRSSSubmitter):
