@@ -80,14 +80,15 @@ class TTRSSSubmitter(AsyncSubmitter, metaclass=abc.ABCMeta):
     async def derive_matcher(self, mission_content) -> List[str]:
         return [mission_content['url']]
 
-    async def create_missions(self, url: str, username: str, password: str, cat_id: int, **httpx_client_options):
+    async def create_missions(self, url: str, username: str, password: str, cat_id: int, semaphore=asyncio.Semaphore(3), **httpx_client_options):
         async with TTRSSClient(url, username, password, **httpx_client_options) as client:
             feeds = await client.api({
                 "op": "getFeeds",
                 "cat_id": cat_id,
                 "limit": None
             })
-            for feed in feeds:
+
+            async def feed_task(feed):
                 content = await client.api({
                     "op": "getHeadlines",
                     "feed_id": feed['id'],
@@ -101,6 +102,12 @@ class TTRSSSubmitter(AsyncSubmitter, metaclass=abc.ABCMeta):
                     tags = await self.derive_tags(mission_content)
                     if len(tags) > 0:
                         await self.add_tags(matchers, tags)
+
+            async def semaphore_task(feed):
+                async with semaphore:
+                    await feed_task(feed)
+
+            await asyncio.gather(*[semaphore_task(feed) for feed in feeds])
 
 
 class TTRSSHubSubmitter(TTRSSSubmitter):
