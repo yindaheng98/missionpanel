@@ -69,6 +69,7 @@ class TTRSSClient(httpx.AsyncClient):
 
 
 class TTRSSSubmitter(AsyncSubmitter, metaclass=abc.ABCMeta):
+    logger = logging.getLogger("TTRSSSubmitter")
 
     @abc.abstractmethod
     async def parse_content(self, feed: dict, content: dict) -> AsyncGenerator[dict, Any]:
@@ -105,11 +106,14 @@ class TTRSSSubmitter(AsyncSubmitter, metaclass=abc.ABCMeta):
             async def mission_task():
                 while True:
                     mission_content = await mission_content_queue.get()
-                    matchers = await self.derive_matcher(mission_content)
-                    await self.create_mission(mission_content, matchers)
-                    tags = await self.derive_tags(mission_content)
-                    if len(tags) > 0:
-                        await self.add_tags(matchers, tags)
+                    try:
+                        matchers = await self.derive_matcher(mission_content)
+                        await self.create_mission(mission_content, matchers)
+                        tags = await self.derive_tags(mission_content)
+                        if len(tags) > 0:
+                            await self.add_tags(matchers, tags)
+                    except Exception as e:
+                        self.logger.warning(f'create mission failed, error: {e}')
                     mission_content_queue.task_done()
 
             mission_task_ = asyncio.create_task(mission_task())

@@ -7,7 +7,8 @@ name: Pip
 
 on:
   push:
-    branches: [main]
+    paths:
+      - "setup.py"
   workflow_dispatch:
 
 jobs:
