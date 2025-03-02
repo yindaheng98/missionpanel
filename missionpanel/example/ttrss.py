@@ -117,7 +117,7 @@ class TTRSSSubmitter(AsyncSubmitter, metaclass=abc.ABCMeta):
                     mission_content_queue.task_done()
 
             mission_task_ = asyncio.create_task(mission_task())
-            await asyncio.gather(*[feed_task(feed) for feed in feeds])  # wait for all feed tasks to finish
+            await asyncio.gather(*[feed_task(feed) for feed in sorted(feeds, key=lambda feed: -feed['last_updated'])])  # wait for all feed tasks to finish
             await mission_content_queue.join()  # wait for all missions to be done
             mission_task_.cancel()  # cancel the while True in mission task
 
