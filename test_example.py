@@ -8,7 +8,8 @@ from missionpanel.example import TTRSSHubRootSubmitter, SubprocessAsyncHandler
 from missionpanel.handler import AsyncHandler, ParallelAsyncHandler
 from missionpanel.orm import Mission, Attempt
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
+
 
 class FakeHandler(SubprocessAsyncHandler):
 
@@ -16,7 +17,7 @@ class FakeHandler(SubprocessAsyncHandler):
         return missions[0] if missions else None
 
     async def construct_command(self, mission: Mission, attempt: Attempt) -> List[str]:
-        return f"ping {mission.content['url']}"
+        return ["D:/MyPrograms/gallery-dl.exe", mission.content['url']]
 
 
 class TagRSSHubSubitemSubmitter(RSSHubSubitemSubmitter):
