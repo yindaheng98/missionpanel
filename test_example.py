@@ -1,18 +1,22 @@
 import asyncio
+import logging
+from typing import List
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, AsyncEngine
 from missionpanel.orm import Base
 from missionpanel.example import RSSHubRootSubmitter, RSSHubSubitemSubmitter
-from missionpanel.example import TTRSSHubRootSubmitter
-from missionpanel.handler import AsyncHandler
+from missionpanel.example import TTRSSHubRootSubmitter, SubprocessAsyncHandler
+from missionpanel.handler import AsyncHandler, ParallelAsyncHandler
+from missionpanel.orm import Mission, Attempt
 
+logging.basicConfig(level=logging.DEBUG)
 
-class FakeHandler(AsyncHandler):
+class FakeHandler(SubprocessAsyncHandler):
+
     async def select_mission(self, missions):
         return missions[0] if missions else None
 
-    async def execute_mission(self, mission, attempt):
-        print(f"Attempt {attempt.id} is executing mission {mission.content['url']}")
-        return True
+    async def construct_command(self, mission: Mission, attempt: Attempt) -> List[str]:
+        return f"ping {mission.content['url']}"
 
 
 class TagRSSHubSubitemSubmitter(RSSHubSubitemSubmitter):
