@@ -66,9 +66,9 @@ async def main(session: AsyncSession):
     # test handler
 
     handler = FakeHandler(session, "Ex hard handler")
-    await handler.run_once(["Mission", "mission"])
-    await handler.run_once(["Mission", "mission"])
-    await handler.run_once(["Mission", "mission"])
+    print(await handler.run_once(["Mission", "mission"]))
+    print(await handler.run_once(["Mission", "mission"]))
+    print(await handler.run_once(["Mission", "mission"]))
 
 
 async def async_main(engine: AsyncEngine):

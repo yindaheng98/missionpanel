@@ -96,14 +96,20 @@ class AsyncHandler(HandlerInterface, abc.ABC):
     async def execute_mission(self, mission: Mission, attempt: Attempt) -> bool:
         pass
 
-    async def run_once(self, tags: List[str]):
+    async def get_mission(self, tags: List[str]) -> Optional[Mission]:
         missions = (await self.session.execute(HandlerInterface.query_todo_missions(tags))).scalars().all()
-        mission = await self.select_mission(missions)
-        if mission is None:
-            return
+        return await self.select_mission(missions)
+
+    async def run_mission(self, mission: Mission):
         attempt = HandlerInterface.create_attempt(self.session, mission, self.name, self.max_time_interval)
         await self.report_attempt(mission, attempt)
         if await self.execute_mission(mission, attempt):
             attempt.success = True
         await self.report_attempt(mission, attempt)
         return attempt
+
+    async def run_once(self, tags: List[str]):
+        mission = await self.get_mission(tags)
+        if mission is None:
+            return
+        return await self.run_mission(mission)
