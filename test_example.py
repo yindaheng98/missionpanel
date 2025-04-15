@@ -3,6 +3,16 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, AsyncEngin
 from missionpanel.orm import Base
 from missionpanel.example import RSSHubRootSubmitter, RSSHubSubitemSubmitter
 from missionpanel.example import TTRSSHubRootSubmitter
+from missionpanel.handler import AsyncHandler
+
+
+class FakeHandler(AsyncHandler):
+    async def select_mission(self, missions):
+        return missions[0] if missions else None
+
+    async def execute_mission(self, mission, attempt):
+        print(f"Attempt {attempt.id} is executing mission {mission.content['url']}")
+        return True
 
 
 class TagRSSHubSubitemSubmitter(RSSHubSubitemSubmitter):
@@ -26,6 +36,8 @@ async def main(session: AsyncSession):
         password='123456',
         cat_id=0,
     )
+    handler = FakeHandler(session, 'example handler')
+    await handler.run_all(['twitter'])
 
 
 async def async_main(engine: AsyncEngine):

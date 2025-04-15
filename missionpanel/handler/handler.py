@@ -113,3 +113,7 @@ class AsyncHandler(HandlerInterface, abc.ABC):
         if mission is None:
             return
         return await self.run_mission(mission)
+
+    async def run_all(self, tags: List[str]):
+        while await self.run_once(tags):
+            pass
