@@ -38,4 +38,6 @@ class SubprocessAsyncHandlerInterface(AsyncHandler, abc.ABC):
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE)
         await asyncio.gather(self.__readline_info(proc.stdout), self.__readline_debug(proc.stderr))
-        return (await proc.wait()) == 0
+        return_code = await proc.wait()
+        self.getLogger().info('return | %d' % return_code)
+        return return_code == 0
