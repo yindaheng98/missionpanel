@@ -12,7 +12,7 @@ package_dir = {
 
 setup(
     name='missionpanel',
-    version='1.2.7',
+    version='1.2.8',
     author='yindaheng98',
     author_email='yindaheng98@gmail.com',
     url='https://github.com/yindaheng98/missionpanel',

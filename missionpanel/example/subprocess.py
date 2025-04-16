@@ -8,7 +8,7 @@ from missionpanel.orm.core import Mission
 from missionpanel.orm.handler import Attempt
 
 
-class SubprocessAsyncHandler(AsyncHandler, abc.ABC):
+class SubprocessAsyncHandlerInterface(AsyncHandler, abc.ABC):
     def getLogger(self) -> logging.Logger:
         return logging.getLogger("SubprocessAsyncHandler")
 

@@ -4,14 +4,14 @@ from typing import List
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, AsyncEngine
 from missionpanel.orm import Base
 from missionpanel.example import RSSHubRootSubmitter, RSSHubSubitemSubmitter
-from missionpanel.example import TTRSSHubRootSubmitter, SubprocessAsyncHandler
+from missionpanel.example import TTRSSHubRootSubmitter, SubprocessAsyncHandlerInterface
 from missionpanel.handler import AsyncHandler, ParallelAsyncHandler
 from missionpanel.orm import Mission, Attempt
 
 logging.basicConfig(level=logging.INFO)
 
 
-class FakeHandlerInterface:
+class FakeHandlerInterface(SubprocessAsyncHandlerInterface):
 
     async def select_mission(self, missions):
         return missions[0] if missions else None
@@ -20,7 +20,7 @@ class FakeHandlerInterface:
         return ["D:/MyPrograms/gallery-dl.exe", mission.content['url']]
 
 
-class FakeHandler(FakeHandlerInterface, SubprocessAsyncHandler):
+class FakeHandler(FakeHandlerInterface, AsyncHandler):
     pass
 
 
