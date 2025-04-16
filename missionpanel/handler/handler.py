@@ -112,15 +112,12 @@ class AsyncHandler(HandlerInterface, abc.ABC):
         await self.report_attempt(mission, attempt)
         return attempt
 
-    async def run_mission(self, mission: Mission):
-        attempt = HandlerInterface.create_attempt(self.session, mission, self.name, self.max_time_interval)
-        return await self.watchdog_mission(mission, attempt)
-
     async def run_once(self, tags: List[str]):
         mission = await self.get_mission(tags)
         if mission is None:
             return
-        return await self.run_mission(mission)
+        attempt = HandlerInterface.create_attempt(self.session, mission, self.name, self.max_time_interval)
+        return await self.watchdog_mission(mission, attempt)
 
     async def run_all(self, tags: List[str]):
         while await self.run_once(tags):
