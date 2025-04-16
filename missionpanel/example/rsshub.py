@@ -1,4 +1,5 @@
 import abc
+import traceback
 from typing import AsyncGenerator, List, Any
 import httpx
 import logging
@@ -30,7 +31,7 @@ class RSSHubSubmitter(AsyncSubmitter, metaclass=abc.ABCMeta):
                     if len(tags) > 0:
                         await self.add_tags(matchers, tags)
                 except Exception as e:
-                    self.logger.warning(f'create mission failed, error: {e}')
+                    self.logger.warning(f'create mission failed, error: {e}, traceback: {traceback.format_exc()}')
 
 
 class RSSHubRootSubmitter(RSSHubSubmitter):

@@ -147,7 +147,7 @@ class TTRSSHubSubmitter(TTRSSSubmitter):
             async for mission_content in self.parse_content_nocatch(feed, content, **httpx_client_options):
                 yield mission_content
         except Exception as e:
-            self.logger.warning(f'parse content failed, error: {e}')
+            self.logger.warning(f'parse content failed, error: {e}, traceback: {traceback.format_exc()}')
 
 
 class TTRSSHubRootSubmitter(TTRSSHubSubmitter):
