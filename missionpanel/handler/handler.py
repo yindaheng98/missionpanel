@@ -1,4 +1,5 @@
 import abc
+import asyncio
 import datetime
 from typing import List, Optional, Tuple, Union
 from sqlalchemy.orm import Session, Query
@@ -100,13 +101,20 @@ class AsyncHandler(HandlerInterface, abc.ABC):
         missions = (await self.session.execute(HandlerInterface.query_todo_missions(tags))).scalars().all()
         return await self.select_mission(missions)
 
-    async def run_mission(self, mission: Mission):
-        attempt = HandlerInterface.create_attempt(self.session, mission, self.name, self.max_time_interval)
+    async def watchdog_mission(self, mission: Mission, attempt: Attempt):
         await self.report_attempt(mission, attempt)
-        if await self.execute_mission(mission, attempt):
+        task = asyncio.create_task(self.execute_mission(mission, attempt))
+        while not task.done():
+            await self.report_attempt(mission, attempt)
+            await asyncio.sleep(self.max_time_interval.total_seconds() / 2)
+        if task.result():
             attempt.success = True
         await self.report_attempt(mission, attempt)
         return attempt
+
+    async def run_mission(self, mission: Mission):
+        attempt = HandlerInterface.create_attempt(self.session, mission, self.name, self.max_time_interval)
+        return await self.watchdog_mission(mission, attempt)
 
     async def run_once(self, tags: List[str]):
         mission = await self.get_mission(tags)
