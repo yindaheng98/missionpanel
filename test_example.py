@@ -11,13 +11,17 @@ from missionpanel.orm import Mission, Attempt
 logging.basicConfig(level=logging.INFO)
 
 
-class FakeHandler(SubprocessAsyncHandler):
+class FakeHandlerInterface:
 
     async def select_mission(self, missions):
         return missions[0] if missions else None
 
     async def construct_command(self, mission: Mission, attempt: Attempt) -> List[str]:
         return ["D:/MyPrograms/gallery-dl.exe", mission.content['url']]
+
+
+class FakeHandler(FakeHandlerInterface, SubprocessAsyncHandler):
+    pass
 
 
 class TagRSSHubSubitemSubmitter(RSSHubSubitemSubmitter):
