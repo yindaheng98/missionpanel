@@ -12,7 +12,7 @@ package_dir = {
 
 setup(
     name='missionpanel',
-    version='1.4.1',
+    version='1.4.2',
     author='yindaheng98',
     author_email='yindaheng98@gmail.com',
     url='https://github.com/yindaheng98/missionpanel',
@@ -27,6 +27,7 @@ setup(
         "Operating System :: OS Independent",
     ],
     install_requires=[
-        'sqlalchemy>=2'
+        'sqlalchemy>=2',
+        'chardet',
     ]
 )
