@@ -20,7 +20,7 @@ class FakeHandlerInterface(SubprocessAsyncHandlerInterface):
         return ["D:/MyPrograms/gallery-dl.exe", mission.content['url']]
 
 
-class FakeHandler(FakeHandlerInterface, AsyncHandler):
+class FakeHandler(FakeHandlerInterface, ParallelAsyncHandler):
     pass
 
 
