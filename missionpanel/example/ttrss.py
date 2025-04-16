@@ -2,6 +2,7 @@ import abc
 import asyncio
 import json
 import logging
+import traceback
 from typing import Any, AsyncGenerator, Dict, List, Union
 import httpx
 from xml.etree import ElementTree
@@ -113,7 +114,7 @@ class TTRSSSubmitter(AsyncSubmitter, metaclass=abc.ABCMeta):
                         if len(tags) > 0:
                             await self.add_tags(matchers, tags)
                     except Exception as e:
-                        self.logger.warning(f'create mission failed, error: {e}')
+                        self.logger.warning(f'create mission failed, error: {e}, traceback: {traceback.format_exc()}')
                     mission_content_queue.task_done()
 
             mission_task_ = asyncio.create_task(mission_task())
