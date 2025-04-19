@@ -34,5 +34,4 @@ class ParallelAsyncHandler(AsyncHandler, abc.ABC):
                 self.task_dict[id] = asyncio.create_task(task(mission, attempt, id))
         for i in self.task_dict:
             await self.task_dict[i]
-        for i in self.task_dict:
-            del self.task_dict[i]
+        self.task_dict = {}
