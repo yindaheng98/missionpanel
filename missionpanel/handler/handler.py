@@ -5,7 +5,7 @@ from typing import List, Optional, Tuple, Union
 from sqlalchemy.orm import Session, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from missionpanel.orm import Mission, Tag, MissionTag, Attempt
-from sqlalchemy import select, func, distinct, case, Select
+from sqlalchemy import select, func, distinct, Select, cast, Text
 
 
 class HandlerInterface(abc.ABC):
@@ -25,13 +25,14 @@ class HandlerInterface(abc.ABC):
     def query_todo_missions(tags: List[str]) -> Select[Tuple[Mission]]:
         return (
             HandlerInterface.query_missions_by_tag(tags)
-            .outerjoin(Attempt)
-            .group_by(Mission.id)
-            .having(func.count(
-                case(((  # see if Attempt is finished or working on the Mission
+            .outerjoin(Attempt, onclause=(
+                (cast(Attempt.content, Text) == cast(Mission.content, Text)) & (
+                    # see if Attempt is finished or working on the Mission
                     Attempt.success.is_(True) |  # have finished handler
                     (Attempt.last_update_time + Attempt.max_time_interval >= datetime.datetime.now())  # have working handler
-                ), 0), else_=None)) <= 0)  # get those Missions that have no finished or working Attempt
+                )
+            ))
+            .where(Attempt.id == None)
         )
 
     @staticmethod
