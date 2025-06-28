@@ -2,13 +2,13 @@ import abc
 import asyncio
 import logging
 import chardet
-from typing import List, Callable
-from missionpanel.handler import AsyncHandler
+from typing import List
+from missionpanel.handler import AsyncHandler, ParallelAsyncHandler
 from missionpanel.orm.core import Mission
 from missionpanel.orm.handler import Attempt
 
 
-class SubprocessAsyncHandlerInterface(AsyncHandler, abc.ABC):
+class SubprocessAsyncHandler(AsyncHandler, abc.ABC):
     def getLogger(self) -> logging.Logger:
         return logging.getLogger("SubprocessAsyncHandler")
 
@@ -41,3 +41,7 @@ class SubprocessAsyncHandlerInterface(AsyncHandler, abc.ABC):
         return_code = await proc.wait()
         self.getLogger().info('return | %d' % return_code)
         return return_code == 0
+
+
+class SubprocessParallelAsyncHandler(SubprocessAsyncHandler, ParallelAsyncHandler):
+    pass
