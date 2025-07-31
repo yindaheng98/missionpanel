@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.ext.asyncio import AsyncSession
 from missionpanel.orm import Mission, Tag, Matcher, MissionTag
 from sqlalchemy import select, Select
+import logging
 
 
 class SubmitterInterface:
@@ -10,6 +11,8 @@ class SubmitterInterface:
     SubmitterInterface is an interface for Submitter and AsyncSubmitter to implement the common methods.
     There is no anything about session.execute in this class.
     '''
+    logger = logging.getLogger('SubmitterInterface')
+
     @staticmethod
     def query_matcher(match_patterns: List[str]) -> Select[Tuple[Matcher]]:
         return select(Matcher).where(Matcher.pattern.in_(match_patterns)).limit(1).with_for_update()
@@ -26,10 +29,12 @@ class SubmitterInterface:
                 content=content,
                 matchers=[Matcher(pattern=pattern) for pattern in match_patterns],
             )
+            SubmitterInterface.logger.info(f"New mission: {content}")
             session.add(mission)
         else:
             mission = existing_mission
             if mission.content != content:
+                SubmitterInterface.logger.info(f"Update mission {mission.id}: {mission.content} -> {content}")
                 mission.content = content
         return mission
 
