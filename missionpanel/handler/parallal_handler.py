@@ -31,6 +31,10 @@ class ParallelAsyncHandler(AsyncHandler, abc.ABC):
                 if mission is None:
                     break
                 attempt = HandlerInterface.create_attempt(self.session, mission, self.name, self.max_time_interval)
+                # avoid idle in transaction
+                await self.session.commit()
+                await self.session.refresh(attempt)
+                await self.session.refresh(mission)
                 self.task_dict[id] = asyncio.create_task(task(mission, attempt, id))
         for i in self.task_dict:
             await self.task_dict[i]

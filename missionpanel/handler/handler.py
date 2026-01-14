@@ -69,6 +69,8 @@ class Handler(HandlerInterface, abc.ABC):
         missions = self.session.execute(HandlerInterface.query_todo_missions(tags)).scalars().all()
         mission = self.select_mission(missions)
         if mission is None:
+            # avoid idle in transaction
+            self.session.commit()
             return
         attempt = HandlerInterface.create_attempt(self.session, mission, self.name, self.max_time_interval)
         self.report_attempt(mission, attempt)
@@ -100,7 +102,13 @@ class AsyncHandler(HandlerInterface, abc.ABC):
 
     async def get_mission(self, tags: List[str]) -> Optional[Mission]:
         missions = (await self.session.execute(HandlerInterface.query_todo_missions(tags))).scalars().all()
-        return await self.select_mission(missions)
+        mission = await self.select_mission(missions)
+        # avoid idle in transaction
+        await self.session.commit()
+        # refresh mission state
+        if mission is not None:
+            await self.session.refresh(mission)
+        return mission
 
     async def watchdog_mission(self, mission: Mission, attempt: Attempt):
         await self.report_attempt(mission, attempt)
@@ -108,6 +116,8 @@ class AsyncHandler(HandlerInterface, abc.ABC):
         while not task.done():
             await self.report_attempt(mission, attempt)
             await asyncio.sleep(self.max_time_interval.total_seconds() / 2)
+        # refresh attempt state because the transaction may have been committed during execute_mission
+        await self.session.refresh(attempt)
         if task.result():
             attempt.success = True
         await self.report_attempt(mission, attempt)
@@ -118,6 +128,10 @@ class AsyncHandler(HandlerInterface, abc.ABC):
         if mission is None:
             return
         attempt = HandlerInterface.create_attempt(self.session, mission, self.name, self.max_time_interval)
+        # avoid long transaction caused by create_attempt
+        await self.session.commit()
+        await self.session.refresh(attempt)
+        await self.session.refresh(mission)
         return await self.watchdog_mission(mission, attempt)
 
     async def run_all(self, tags: List[str]):
