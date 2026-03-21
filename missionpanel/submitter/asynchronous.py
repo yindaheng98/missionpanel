@@ -45,6 +45,18 @@ class AsyncSubmitterInterface(SubmitterInterface):
         await AsyncSubmitterInterface._add_tags(session, mission, tags)
         await session.commit()
 
+    @staticmethod
+    async def _delete_tags(session: AsyncSession, mission: Mission, tags: List[str]):
+        await session.execute(SubmitterInterface.delete_mission_tags(mission.id, tags))
+
+    @staticmethod
+    async def delete_tags(session: AsyncSession, match_patterns: List[str], tags: List[str]):
+        mission = await AsyncSubmitterInterface._query_mission(session, match_patterns)
+        if mission is None:
+            raise ValueError("Mission not found")
+        await AsyncSubmitterInterface._delete_tags(session, mission, tags)
+        await session.commit()
+
 
 class AsyncSubmitter(AsyncSubmitterInterface):
     def __init__(self, session: AsyncSession):
@@ -58,3 +70,6 @@ class AsyncSubmitter(AsyncSubmitterInterface):
 
     async def add_tags(self, matchers: List[str], tags: List[str]):
         return await AsyncSubmitterInterface.add_tags(self.session, matchers, tags)
+
+    async def delete_tags(self, matchers: List[str], tags: List[str]):
+        return await AsyncSubmitterInterface.delete_tags(self.session, matchers, tags)

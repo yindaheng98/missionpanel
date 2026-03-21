@@ -61,6 +61,10 @@ def main(session: Session):
     submitter.add_tags(["Hard mission"], ["Mission", "mission"])
     submitter.add_tags(["Ex Hard mission"], ["Mission", "mission"])
 
+    # test delete tags
+    submitter.delete_tags(["Easy mission"], ["mission"])
+    submitter.delete_tags(["Hard mission"], ["Mission", "mission"])
+
     # test handler
 
     handler = FakeHandler(session, "Ex hard handler")

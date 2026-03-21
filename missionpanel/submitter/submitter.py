@@ -41,6 +41,18 @@ class SyncSubmitterInterface(SubmitterInterface):
         SyncSubmitterInterface._add_tags(session, mission, tags)
         session.commit()
 
+    @staticmethod
+    def _delete_tags(session: Session, mission: Mission, tags: List[str]):
+        session.execute(SubmitterInterface.delete_mission_tags(mission.id, tags))
+
+    @staticmethod
+    def delete_tags(session: Session, match_patterns: List[str], tags: List[str]):
+        mission = SyncSubmitterInterface._query_mission(session, match_patterns)
+        if mission is None:
+            raise ValueError("Mission not found")
+        SyncSubmitterInterface._delete_tags(session, mission, tags)
+        session.commit()
+
 
 class Submitter(SyncSubmitterInterface):
     def __init__(self, session: Session):
@@ -54,3 +66,6 @@ class Submitter(SyncSubmitterInterface):
 
     def add_tags(self, match_patterns: List[str], tags: List[str]):
         return SyncSubmitterInterface.add_tags(self.session, match_patterns, tags)
+
+    def delete_tags(self, match_patterns: List[str], tags: List[str]):
+        return SyncSubmitterInterface.delete_tags(self.session, match_patterns, tags)

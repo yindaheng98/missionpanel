@@ -2,7 +2,7 @@ from typing import List, Union, Tuple
 from sqlalchemy.orm import Session
 from sqlalchemy.ext.asyncio import AsyncSession
 from missionpanel.orm import Mission, Tag, Matcher, MissionTag
-from sqlalchemy import select, Select
+from sqlalchemy import select, delete, Select
 import logging
 
 
@@ -48,3 +48,7 @@ class SubmitterInterface:
         session.add_all([Tag(name=tag_name) for tag_name in tags_name if tag_name not in exist_tags_name])
         exist_mission_tags_name = [tag.tag_name for tag in exist_mission_tags]
         session.add_all([MissionTag(mission=mission, tag_name=tag_name) for tag_name in tags_name if tag_name not in exist_mission_tags_name])
+
+    @staticmethod
+    def delete_mission_tags(mission_id: int, tags_name: List[str]):
+        return delete(MissionTag).where(MissionTag.mission_id == mission_id, MissionTag.tag_name.in_(tags_name))
