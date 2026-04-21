@@ -6,7 +6,8 @@ from sqlalchemy import (
     Text,
     JSON,
     DateTime,
-    ForeignKey
+    ForeignKey,
+    Index,
 )
 from sqlalchemy.orm import relationship, DeclarativeBase, Mapped
 from sqlalchemy.ext.asyncio import AsyncAttrs
@@ -56,6 +57,9 @@ class Tag(Base):
 
 class MissionTag(Base):
     __tablename__ = "missiontag"
+    __table_args__ = (
+        Index("ix_missiontag_mission_id", "mission_id"),
+    )
 
     # relationship
     tag_name = Column(Text, ForeignKey("tag.name"), primary_key=True, comment="Tag")

@@ -7,7 +7,8 @@ from sqlalchemy import (
     Boolean,
     DateTime,
     Interval,
-    ForeignKey
+    ForeignKey,
+    Index,
 )
 from sqlalchemy.orm import relationship, Mapped
 from .core import Base, Mission
@@ -15,6 +16,9 @@ from .core import Base, Mission
 
 class Attempt(Base):
     __tablename__ = "attempt"
+    __table_args__ = (
+        Index("ix_attempt_mission_id", "mission_id"),
+    )
     id = Column(Integer, primary_key=True, autoincrement=True, comment="Mission ID")
     handler = Column(Text, comment="Handler Name")
     create_time = Column(DateTime, default=datetime.datetime.now, comment="Attempt Start Time")
