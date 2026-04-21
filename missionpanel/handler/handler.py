@@ -2,10 +2,12 @@ import abc
 import asyncio
 import datetime
 from typing import List, Optional, Tuple, Union
-from sqlalchemy.orm import Session, Query, selectinload
+from sqlalchemy.orm import Session, Query, selectinload, configure_mappers
 from sqlalchemy.ext.asyncio import AsyncSession
 from missionpanel.orm import Mission, Tag, MissionTag, Attempt
 from sqlalchemy import select, func, distinct, Select, cast, Text
+
+configure_mappers()
 
 
 class HandlerInterface(abc.ABC):
@@ -32,9 +34,9 @@ class HandlerInterface(abc.ABC):
                     (Attempt.last_update_time + Attempt.max_time_interval >= datetime.datetime.now())  # have working handler
                 )
             ))
-        .where(Attempt.id == None)
-        .options(selectinload(Mission.attempts))
-    )
+            .where(Attempt.id == None)
+            .options(selectinload(Mission.attempts))
+        )
 
     @staticmethod
     def create_attempt(session: Union[Session | AsyncSession], mission: Mission, name: str, max_time_interval: datetime.timedelta = datetime.timedelta(seconds=1)) -> Attempt:
